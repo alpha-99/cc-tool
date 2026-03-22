@@ -1,0 +1,45 @@
+{
+  "//": "{{PROJECT_NAME}} 项目的 Claude Code 配置文件",
+  "//": "语言: {{LANGUAGE}}，项目路径: {{PROJECT_DIR}}",
+  "//": "最后更新: 由 cc-tool 自动生成",
+
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "Read(*.go)",
+      "Read(go.mod)",
+      "Read(go.sum)",
+      "Read(Makefile)",
+      "Read(README.md)",
+      "Read(constitution.md)",
+      "Read(specs/**)",
+      "Grep",
+      "Glob",
+      "LS",
+      "Bash(go:version)",
+      "Bash(go:list:*)",
+      "Bash(go:build:*)",
+      "Bash(go:test:*)",
+      "Bash(go:fmt:*)",
+      "Bash(go:vet:*)",
+      "Bash(go:mod:*)"
+    ],
+    "ask": [
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Bash(go:get:*)",
+      "Bash(go:install:*)",
+      "Bash(git:add:*)",
+      "Bash(git:commit:*)"
+    ],
+    "deny": [
+      "Read(./.env*)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Bash(rm:*)",
+      "Bash(git:push:*)",
+      "WebFetch"
+    ]
+  }
+}

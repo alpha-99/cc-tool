@@ -1,0 +1,47 @@
+{
+  "//": "{{PROJECT_NAME}} 项目的 Claude Code 配置文件",
+  "//": "语言: {{LANGUAGE}}，项目路径: {{PROJECT_DIR}}",
+  "//": "最后更新: 由 cc-tool 自动生成",
+
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "Read(*.java)",
+      "Read(pom.xml)",
+      "Read(build.gradle)",
+      "Read(build.gradle.kts)",
+      "Read(settings.gradle)",
+      "Read(README.md)",
+      "Read(constitution.md)",
+      "Read(specs/**)",
+      "Grep",
+      "Glob",
+      "LS",
+      "Bash(java:version)",
+      "Bash(javac:version)",
+      "Bash(mvn:version)",
+      "Bash(gradle:version)",
+      "Bash(mvn:compile:*)",
+      "Bash(mvn:test:*)",
+      "Bash(gradle:build:*)",
+      "Bash(gradle:test:*)"
+    ],
+    "ask": [
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Bash(mvn:install:*)",
+      "Bash(gradle:dependencies:*)",
+      "Bash(git:add:*)",
+      "Bash(git:commit:*)"
+    ],
+    "deny": [
+      "Read(./.env*)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Bash(rm:*)",
+      "Bash(git:push:*)",
+      "WebFetch"
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "//": "{{PROJECT_NAME}} 项目的 Claude Code 配置文件",
+  "//": "语言: {{LANGUAGE}}，项目路径: {{PROJECT_DIR}}",
+  "//": "最后更新: 由 cc-tool 自动生成",
+
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "Read(*.rs)",
+      "Read(Cargo.toml)",
+      "Read(Cargo.lock)",
+      "Read(Makefile)",
+      "Read(README.md)",
+      "Read(constitution.md)",
+      "Read(specs/**)",
+      "Grep",
+      "Glob",
+      "LS",
+      "Bash(cargo:version)",
+      "Bash(cargo:check:*)",
+      "Bash(cargo:build:*)",
+      "Bash(cargo:test:*)",
+      "Bash(cargo:fmt:*)",
+      "Bash(cargo:clippy:*)"
+    ],
+    "ask": [
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Bash(cargo:add:*)",
+      "Bash(cargo:update:*)",
+      "Bash(git:add:*)",
+      "Bash(git:commit:*)"
+    ],
+    "deny": [
+      "Read(./.env*)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Bash(rm:*)",
+      "Bash(git:push:*)",
+      "WebFetch"
+    ]
+  }
+}

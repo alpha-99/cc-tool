@@ -1,0 +1,51 @@
+{
+  "//": "{{PROJECT_NAME}} 项目的 Claude Code 配置文件",
+  "//": "语言: {{LANGUAGE}}，项目路径: {{PROJECT_DIR}}",
+  "//": "最后更新: 由 cc-tool 自动生成",
+
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "Read(*.js)",
+      "Read(*.ts)",
+      "Read(*.jsx)",
+      "Read(*.tsx)",
+      "Read(package.json)",
+      "Read(package-lock.json)",
+      "Read(yarn.lock)",
+      "Read(tsconfig.json)",
+      "Read(.eslintrc*)",
+      "Read(.prettierrc*)",
+      "Read(README.md)",
+      "Read(constitution.md)",
+      "Read(specs/**)",
+      "Grep",
+      "Glob",
+      "LS",
+      "Bash(node:version)",
+      "Bash(npm:list:*)",
+      "Bash(yarn:list:*)",
+      "Bash(npm:run:*)",
+      "Bash(yarn:run:*)",
+      "Bash(npm:test:*)",
+      "Bash(yarn:test:*)"
+    ],
+    "ask": [
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Bash(npm:install:*)",
+      "Bash(yarn:add:*)",
+      "Bash(git:add:*)",
+      "Bash(git:commit:*)"
+    ],
+    "deny": [
+      "Read(./.env*)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Bash(rm:*)",
+      "Bash(git:push:*)",
+      "WebFetch"
+    ]
+  }
+}
