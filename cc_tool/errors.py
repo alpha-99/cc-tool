@@ -42,3 +42,8 @@ class GitignoreError(CCToolError):
 class UserConfigError(CCToolError):
     """用户配置错误"""
     pass
+
+
+class TemplateValidationError(CCToolError):
+    """模板验证失败错误"""
+    pass

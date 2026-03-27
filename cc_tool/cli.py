@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from . import constants, logger
 from .errors import LanguageNotSupportedError, ProjectDirectoryError
+from .core import CCTool
 
 
 def normalize_language(language: str) -> str:
@@ -203,13 +204,15 @@ def main() -> int:
         logger.log_info(f"正在初始化项目: {args.project_dir}")
         logger.log_info(f"使用语言模板: {args.language}")
 
-        # TODO: 调用核心逻辑（待Phase 5实现）
-        # from .core import initialize_project
-        # result = initialize_project(args.project_dir, args.language,
-        #                            verbose=args.verbose, dry_run=args.dry_run)
-        # logger.log_info(f"完成！共复制 {result.copied_count} 个文件。")
+        tool = CCTool()
+        result = tool.initialize_project(args.project_dir, args.language,
+                                    dry_run=args.dry_run)
+        
+        if args.verbose:
+            for file in result['copied']:
+                logger.log_info(f"复制文件: {file}。")
 
-        logger.log_warning("核心功能尚未实现，此版本仅演示命令行解析")
+        logger.log_info(f"完成！共复制 {len(result['copied'])} 个文件。")
         return 0
 
     except (LanguageNotSupportedError, ProjectDirectoryError) as e:

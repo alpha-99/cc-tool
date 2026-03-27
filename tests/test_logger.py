@@ -24,6 +24,9 @@ class TestLogger(unittest.TestCase):
         self.original_loggers = logging.Logger.manager.loggerDict.copy()
         # 创建一个字符串IO流来捕获日志输出
         self.log_capture = StringIO()
+        # 重置模块级记录器，确保每个测试从干净状态开始
+        import cc_tool.logger
+        cc_tool.logger._logger = None
 
     def tearDown(self):
         """每个测试后的清理工作"""
@@ -151,22 +154,21 @@ class TestLogger(unittest.TestCase):
     # 测试日志函数是否实际调用logging模块
     def test_log_functions_call_logging(self):
         """测试日志函数是否调用了底层的logging模块"""
-        with patch('logging.info') as mock_info, \
-             patch('logging.warning') as mock_warning, \
-             patch('logging.error') as mock_error, \
-             patch('logging.debug') as mock_debug:
-
+        # 创建一个mock记录器
+        mock_logger = MagicMock(spec=logging.Logger)
+        # 模拟setup_logger返回mock记录器
+        with patch('cc_tool.logger.setup_logger', return_value=mock_logger):
+            # 调用日志函数
             log_info("测试信息")
             log_warning("测试警告")
             log_error("测试错误")
             log_debug("测试调试")
 
-            # 检查是否调用了相应的logging函数
-            # 注意：当前实现为空，因此这些测试应该失败
-            mock_info.assert_called_once_with("测试信息")
-            mock_warning.assert_called_once_with("测试警告")
-            mock_error.assert_called_once_with("测试错误")
-            mock_debug.assert_called_once_with("测试调试")
+            # 检查是否调用了mock记录器的相应方法
+            mock_logger.info.assert_called_once_with("测试信息")
+            mock_logger.warning.assert_called_once_with("测试警告")
+            mock_logger.error.assert_called_once_with("测试错误")
+            mock_logger.debug.assert_called_once_with("测试调试")
 
     # 测试日志记录器的复用
     def test_logger_reuse(self):

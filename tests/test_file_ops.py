@@ -12,10 +12,9 @@ from pathlib import Path
 
 # 导入被测试模块
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from cc_tool.file_ops import replace_variables_in_file
+from cc_tool.file_ops import replace_variables_in_file, copy_template_files
 from cc_tool.errors import VariableReplaceError
-from cc_tool.models import ProjectContext
-from cc_tool.constants import SUPPORTED_VARIABLES
+from cc_tool.models import ProjectContext, CopyResult
 
 
 class TestReplaceVariablesInFile(unittest.TestCase):
@@ -227,10 +226,12 @@ class TestReplaceVariablesInFile(unittest.TestCase):
                 if case["file_path"] is not None and case["name"] != "文件不存在":
                     case["file_path"].touch()
 
+                # 跳过需要特殊权限的测试（file_path为None）
+                if case["file_path"] is None:
+                    self.skipTest("需要特殊权限的测试已跳过")
+                    continue
+
                 with self.assertRaises(case["expected_error"]):
-                    if case["file_path"] is None:
-                        # 跳过需要特殊权限的测试
-                        continue
                     replace_variables_in_file(case["file_path"], self.context)
 
     # 表格驱动测试：不同文件编码
@@ -291,6 +292,188 @@ PORT = 8080
         replace_variables_in_file(test_file, self.context)
         actual_content = test_file.read_text(encoding="utf-8")
         self.assertEqual(actual_content, expected)
+
+
+class TestCopyTemplateFiles(unittest.TestCase):
+    """测试模板文件复制功能"""
+
+    def setUp(self):
+        """每个测试前的准备工作"""
+        import tempfile
+        self.temp_dir = Path(tempfile.mkdtemp())
+        # 创建测试用的 ProjectContext
+        self.context = ProjectContext(
+            project_dir=self.temp_dir / "myproject",
+            project_name="MyProject",
+            language="python",
+            verbose=False,
+            dry_run=False,
+            quiet=False,
+        )
+
+    def tearDown(self):
+        """每个测试后的清理工作"""
+        import shutil
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def test_copy_template_files_basic(self):
+        """测试基本文件复制行为"""
+        test_cases = [
+            {
+                "name": "复制新文件",
+                "template_files": [".claude/settings.json"],
+                "existing_files": [],
+                "expected_copied": [".claude/settings.json"],
+                "expected_skipped": [],
+            },
+            {
+                "name": "跳过已存在文件",
+                "template_files": ["CLAUDE.md"],
+                "existing_files": ["CLAUDE.md"],
+                "expected_copied": [],
+                "expected_skipped": ["CLAUDE.md"],
+            },
+            {
+                "name": "混合情况",
+                "template_files": [".claude/settings.json", "CLAUDE.md", "constitution.md"],
+                "existing_files": ["CLAUDE.md"],
+                "expected_copied": [".claude/settings.json", "constitution.md"],
+                "expected_skipped": ["CLAUDE.md"],
+            },
+        ]
+
+        for case in test_cases:
+            with self.subTest(case=case["name"]):
+                # 创建模板目录结构
+                template_dir = self.temp_dir / f"template_{case['name']}"
+                template_dir.mkdir(exist_ok=True)
+                for file_rel in case["template_files"]:
+                    file_path = template_dir / file_rel
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    file_path.write_text(f"Content of {file_rel}", encoding="utf-8")
+
+                # 创建项目目录结构（已存在文件）
+                project_dir = self.temp_dir / f"project_{case['name']}"
+                project_dir.mkdir(exist_ok=True)
+                for file_rel in case["existing_files"]:
+                    file_path = project_dir / file_rel
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    file_path.write_text(f"Existing content of {file_rel}", encoding="utf-8")
+
+                # 调用复制函数
+                result = copy_template_files(template_dir, project_dir, self.context)
+
+                # 验证复制结果
+                copied_rel = [str(p.relative_to(project_dir)) for p in result.copied]
+                skipped_rel = [str(p.relative_to(project_dir)) for p in result.skipped]
+                self.assertEqual(set(copied_rel), set(case["expected_copied"]))
+                self.assertEqual(set(skipped_rel), set(case["expected_skipped"]))
+                self.assertEqual(len(result.errors), 0)
+
+                # 验证文件内容
+                for file_rel in case["expected_copied"]:
+                    expected_content = f"Content of {file_rel}"
+                    actual_content = (project_dir / file_rel).read_text(encoding="utf-8")
+                    self.assertEqual(actual_content, expected_content)
+
+    def test_copy_template_files_recursive(self):
+        """测试递归复制和目录创建"""
+        test_cases = [
+            {
+                "name": "嵌套目录结构",
+                "template_files": [
+                    ".claude/settings.json",
+                    ".claude/agents/empty.txt",
+                    "specs/readme.md",
+                    "specs/requirements.txt",
+                ],
+                "existing_files": [],
+                "expected_copied": [
+                    ".claude/settings.json",
+                    ".claude/agents/empty.txt",
+                    "specs/readme.md",
+                    "specs/requirements.txt",
+                ],
+                "expected_skipped": [],
+            },
+        ]
+
+        for case in test_cases:
+            with self.subTest(case=case["name"]):
+                template_dir = self.temp_dir / "template"
+                template_dir.mkdir()
+                for file_rel in case["template_files"]:
+                    file_path = template_dir / file_rel
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    file_path.write_text(f"Content of {file_rel}", encoding="utf-8")
+
+                project_dir = self.temp_dir / "project"
+                project_dir.mkdir()
+
+                result = copy_template_files(template_dir, project_dir, self.context)
+
+                copied_rel = [str(p.relative_to(project_dir)) for p in result.copied]
+                self.assertEqual(set(copied_rel), set(case["expected_copied"]))
+                self.assertEqual(len(result.skipped), 0)
+                self.assertEqual(len(result.errors), 0)
+
+                # 验证所有文件都存在
+                for file_rel in case["expected_copied"]:
+                    self.assertTrue((project_dir / file_rel).exists())
+
+    def test_copy_template_files_dry_run(self):
+        """测试dry-run预览模式"""
+        template_dir = self.temp_dir / "template"
+        template_dir.mkdir()
+        (template_dir / "test.txt").write_text("Content", encoding="utf-8")
+
+        project_dir = self.temp_dir / "project"
+        project_dir.mkdir()
+
+        # dry_run=True 应该不实际复制文件
+        result = copy_template_files(template_dir, project_dir, self.context, dry_run=True)
+
+        # 验证结果统计
+        self.assertEqual(len(result.copied), 1)
+        self.assertEqual(len(result.skipped), 0)
+        self.assertEqual(len(result.errors), 0)
+
+        # 验证文件未被实际复制
+        self.assertFalse((project_dir / "test.txt").exists())
+
+    def test_copy_template_files_symlink(self):
+        """测试符号链接处理（应作为普通文件复制）"""
+        import os
+        template_dir = self.temp_dir / "template"
+        template_dir.mkdir()
+
+        # 创建源文件
+        source_file = template_dir / "source.txt"
+        source_file.write_text("Original content", encoding="utf-8")
+
+        # 创建符号链接（如果平台支持）
+        symlink_file = template_dir / "link.txt"
+        try:
+            os.symlink(source_file, symlink_file)
+            has_symlink = True
+        except (OSError, NotImplementedError):
+            # 平台不支持符号链接，跳过测试
+            has_symlink = False
+
+        if has_symlink:
+            project_dir = self.temp_dir / "project"
+            project_dir.mkdir()
+
+            result = copy_template_files(template_dir, project_dir, self.context)
+
+            # 验证符号链接被复制为普通文件
+            copied_files = [str(p.relative_to(project_dir)) for p in result.copied]
+            self.assertIn("link.txt", copied_files)
+
+            # 验证链接内容被复制（而不是保持符号链接）
+            copied_file = project_dir / "link.txt"
+            self.assertFalse(copied_file.is_symlink())
+            self.assertEqual(copied_file.read_text(encoding="utf-8"), "Original content")
 
 
 if __name__ == "__main__":
