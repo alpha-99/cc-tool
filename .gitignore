@@ -3,3 +3,5 @@
 .idea/
 *.DS_Store
 /my-issue2md-project
+.pytest_cache
+./cc_tool/__pycache__
